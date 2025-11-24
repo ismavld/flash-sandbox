@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Inscription · Flash Sandbox</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/auth.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    .username-status {
+      font-size: 0.875rem;
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+    }
+    .username-status.checking {
+      color: #666;
+    }
+    .username-status.available {
+      color: #22c55e;
+    }
+    .username-status.taken {
+      color: #ef4444;
+    }
+    .username-status .spinner {
+      width: 12px;
+      height: 12px;
+      border: 2px solid #ddd;
+      border-top-color: #666;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="auth-page">
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="auth-header">
+        <h1>⚡ Flash Sandbox</h1>
+        <p>Créez votre compte pour commencer</p>
+      </div>
+
+      <form id="registerForm" class="auth-form">
+        <div class="form-group">
+          <label for="username">Nom d'utilisateur</label>
+          <input 
+            type="text" 
+            id="username" 
+            name="username" 
+            required 
+            autocomplete="username"
+            placeholder="johndoe"
+            minlength="3"
+            maxlength="20"
+            pattern="[a-zA-Z0-9_-]+"
+            title="Lettres, chiffres, tirets et underscores uniquement"
+          >
+          <div id="usernameStatus" class="username-status" style="display: none;"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            required 
+            autocomplete="email"
+            placeholder="vous@exemple.com"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            required 
+            autocomplete="new-password"
+            placeholder="••••••••"
+            minlength="6"
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="passwordConfirm">Confirmer le mot de passe</label>
+          <input 
+            type="password" 
+            id="passwordConfirm" 
+            name="passwordConfirm" 
+            required 
+            autocomplete="new-password"
+            placeholder="••••••••"
+            minlength="6"
+          >
+        </div>
+
+        <div id="errorMessage" class="error-message" style="display: none;"></div>
+        <div id="successMessage" class="success-message" style="display: none;"></div>
+
+        <button type="submit" class="btn-primary" id="submitBtn">
+          Créer mon compte
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        <p>Déjà un compte ? <a href="/login">Se connecter</a></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/supabase-client.js"></script>
+  <script>
+    let supabaseClient;
+    let usernameCheckTimeout;
+    let isUsernameAvailable = false;
+
+    (async function() {
+      try {
+        supabaseClient = await initSupabase();
+        console.log('✅ Supabase initialisé');
+
+        // Vérifier si déjà connecté
+        const isAuthed = await checkAuth();
+        if (isAuthed) {
+          window.location.href = '/dashboard';
+        }
+      } catch (error) {
+        console.error('❌ Erreur init Supabase:', error);
+        document.body.innerHTML = `
+          <div style="text-align:center;padding:50px;">
+            <h2>⚠️ Erreur de configuration</h2>
+            <p>Impossible de charger la configuration Supabase</p>
+          </div>
+        `;
+      }
+    })();
+
+    const registerForm = document.getElementById('registerForm');
+    const errorMsg = document.getElementById('errorMessage');
+    const successMsg = document.getElementById('successMessage');
+    const submitBtn = document.getElementById('submitBtn');
+    const usernameInput = document.getElementById('username');
+    const usernameStatus = document.getElementById('usernameStatus');
+
+    // Vérification du username en temps réel
+    usernameInput.addEventListener('input', (e) => {
+      const username = e.target.value.trim();
+      
+      // Clear previous timeout
+      clearTimeout(usernameCheckTimeout);
+      
+      // Reset status
+      usernameStatus.style.display = 'none';
+      isUsernameAvailable = false;
+
+      // Validation basique
+      if (username.length < 3) {
+        return;
+      }
+
+      // Vérifier le format
+      const validFormat = /^[a-zA-Z0-9_-]+$/.test(username);
+      if (!validFormat) {
+        usernameStatus.className = 'username-status taken';
+        usernameStatus.innerHTML = '❌ Lettres, chiffres, tirets et underscores uniquement';
+        usernameStatus.style.display = 'flex';
+        return;
+      }
+
+      // Afficher le spinner
+      usernameStatus.className = 'username-status checking';
+      usernameStatus.innerHTML = '<div class="spinner"></div> Vérification...';
+      usernameStatus.style.display = 'flex';
+
+      // Debounce la requête
+      usernameCheckTimeout = setTimeout(async () => {
+        await checkUsernameAvailability(username);
+      }, 500);
+    });
+
+    async function checkUsernameAvailability(username) {
+      try {
+        const { data, error } = await supabaseClient
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (data) {
+          // Username pris
+          usernameStatus.className = 'username-status taken';
+          usernameStatus.innerHTML = '❌ Ce nom d\'utilisateur est déjà pris';
+          isUsernameAvailable = false;
+        } else {
+          // Username disponible
+          usernameStatus.className = 'username-status available';
+          usernameStatus.innerHTML = '✅ Ce nom d\'utilisateur est disponible';
+          isUsernameAvailable = true;
+        }
+        usernameStatus.style.display = 'flex';
+      } catch (err) {
+        console.error('Erreur vérification username:', err);
+        usernameStatus.className = 'username-status';
+        usernameStatus.innerHTML = '⚠️ Erreur de vérification';
+        usernameStatus.style.display = 'flex';
+        isUsernameAvailable = false;
+      }
+    }
+
+    registerForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const username = document.getElementById('username').value.trim();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const passwordConfirm = document.getElementById('passwordConfirm').value;
+
+      errorMsg.style.display = 'none';
+      successMsg.style.display = 'none';
+
+      // Validation du username
+      if (username.length < 3) {
+        errorMsg.textContent = 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (username.length > 20) {
+        errorMsg.textContent = 'Le nom d\'utilisateur ne doit pas dépasser 20 caractères';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const validFormat = /^[a-zA-Z0-9_-]+$/.test(username);
+      if (!validFormat) {
+        errorMsg.textContent = 'Le nom d\'utilisateur ne peut contenir que des lettres, chiffres, tirets et underscores';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (!isUsernameAvailable) {
+        errorMsg.textContent = 'Ce nom d\'utilisateur n\'est pas disponible';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      // Validation du mot de passe
+      if (password !== passwordConfirm) {
+        errorMsg.textContent = 'Les mots de passe ne correspondent pas';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      if (password.length < 6) {
+        errorMsg.textContent = 'Le mot de passe doit contenir au moins 6 caractères';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Création en cours...';
+
+      try {
+        // Vérifier une dernière fois si le username est disponible
+        const { data: existingUser } = await supabaseClient
+          .from('profiles')
+          .select('username')
+          .eq('username', username)
+          .maybeSingle();
+
+        if (existingUser) {
+          throw new Error('Ce nom d\'utilisateur est déjà pris');
+        }
+
+        // Créer le compte
+        const { data, error } = await supabaseClient.auth.signUp({
+          email: email,
+          password: password,
+          options: {
+            data: {
+              username: username
+            }
+          }
+        });
+
+        if (error) throw error;
+
+        // Créer le profil avec le username
+        if (data.user) {
+          const { error: profileError } = await supabaseClient
+            .from('profiles')
+            .insert([
+              {
+                id: data.user.id,
+                username: username,
+                email: email
+              }
+            ]);
+
+          if (profileError) {
+            console.error('Erreur création profil:', profileError);
+          }
+        }
+
+        if (data.session) {
+          // Connexion automatique
+          setAuthToken(data.session.access_token);
+          successMsg.textContent = 'Compte créé avec succès ! Redirection...';
+          successMsg.style.display = 'block';
+
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1500);
+        } else {
+          // Email de confirmation requis
+          successMsg.textContent = 'Compte créé ! Vérifiez votre email pour confirmer votre inscription.';
+          successMsg.style.display = 'block';
+
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 3000);
+        }
+      } catch (err) {
+        console.error('Registration error:', err);
+        errorMsg.textContent = err.message || 'Erreur lors de l\'inscription';
+        errorMsg.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Créer mon compte';
+      }
+    });
+  </script>
+</body>
+</html>

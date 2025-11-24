@@ -1,0 +1,19 @@
+flash-sandbox/
+├── docker-compose.yml
+├── Dockerfile
+├── package.json
+├── server.js
+├── .env.example
+├── README.md
+└── public/
+    ├── index.html
+    ├── login.html
+    ├── register.html
+    ├── dashboard.html
+    ├── sandbox.html
+    ├── style.css
+    ├── auth.css
+    ├── auth.js
+    ├── dashboard.js
+    ├── client.js
+    └── supabase-client.js

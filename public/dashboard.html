@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Tableau de bord · Flash Sandbox</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="header-content">
+        <h1>⚡ Flash Sandbox</h1>
+        <div class="user-menu">
+          <span id="userUsername" class="user-email">@<span id="usernameText"></span></span>
+          <button id="logoutBtn" class="btn-logout">Déconnexion</button>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h2>Créer une nouvelle sandbox</h2>
+        <form id="createForm">
+          <input 
+            type="text" 
+            id="sandboxName" 
+            placeholder="nom-de-la-sandbox"
+            pattern="[a-zA-Z0-9_-]{3,50}"
+            required
+            autocomplete="off"
+          >
+          <button type="submit">Créer →</button>
+        </form>
+        <p class="hint">3-50 caractères : lettres, chiffres, tirets ou underscores</p>
+      </section>
+
+      <section class="sandboxes">
+        <h2>Mes sandboxes</h2>
+        <div id="sandboxList">
+          <p class="loading">Chargement...</p>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Mode éphémère · Purge auto après <strong>12h</strong> d'inactivité<br>
+        <a href="/health" target="_blank">État du serveur</a>
+      </p>
+    </footer>
+  </div>
+
+  <!-- Modal de partage -->
+  <div id="shareModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Partager la sandbox</h3>
+        <button class="modal-close" onclick="closeShareModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <p>Entrez le nom d'utilisateur avec qui partager :</p>
+        <form id="shareForm">
+          <input 
+            type="text" 
+            id="shareUsername" 
+            placeholder="@username"
+            pattern="[a-zA-Z0-9_-]{3,20}"
+            required
+            autocomplete="off"
+          >
+          <button type="submit" class="btn-primary">Partager</button>
+        </form>
+        <div id="shareError" class="error-message" style="display: none;"></div>
+        <div id="shareSuccess" class="success-message" style="display: none;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/dashboard.js"></script>
+</body>
+</html>

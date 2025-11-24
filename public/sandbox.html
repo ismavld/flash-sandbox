@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Sandbox</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="sandbox-page">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <a href="/dashboard" class="btn-back">← Dashboard</a>
+      <h1 id="sandboxTitle">Sandbox</h1>
+    </div>
+    <div class="toolbar-right">
+      <span id="status" class="status connecting">Connexion...</span>
+    </div>
+  </div>
+
+  <div class="editor-container">
+    <textarea 
+      id="editor" 
+      placeholder="Commencez à taper... Tout est synchronisé en temps réel."
+      spellcheck="false"
+    ></textarea>
+  </div>
+
+  <div class="action-bar">
+    <button id="btnCopy" class="btn btn-secondary">📋 Copier</button>
+    <button id="btnClear" class="btn btn-danger">🗑️ Effacer tout</button>
+    <span id="charCount" class="char-count">0 caractères</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
+  <script src="/client.js"></script>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flash Sandbox</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/supabase-client.js"></script>
+</head>
+<body>
+  <div style="text-align: center; padding: 50px;">
+    <h1>⚡ Flash Sandbox</h1>
+    <p>Redirection en cours...</p>
+  </div>
+
+  <script>
+    (async function() {
+      try {
+        const supabaseClient = await initSupabase();
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        
+        if (session) {
+          // Utilisateur connecté → Dashboard
+          window.location.href = '/dashboard';
+        } else {
+          // Utilisateur non connecté → Login
+          window.location.href = '/login';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        window.location.href = '/login';
+      }
+    })();
+  </script>
+</body>
+</html>
