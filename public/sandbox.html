@@ -15,6 +15,9 @@
     </div>
     <div class="toolbar-right">
       <span id="status" class="status connecting">Connexion...</span>
+       <button id="darkModeToggle" class="btn-dark-mode" onclick="toggleDarkMode()" title="Basculer en mode sombre">
+      🌙
+    </button>
     </div>
   </div>
 
@@ -35,5 +38,39 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-client.js"></script>
   <script src="/client.js"></script>
+  <script>
+// Fonction de toggle du mode sombre
+function toggleDarkMode() {
+  const body = document.body;
+  const button = document.getElementById('darkModeToggle');
+  
+  body.classList.toggle('dark-mode');
+  
+  // Change l'emoji du bouton
+  if (body.classList.contains('dark-mode')) {
+    button.textContent = '☀️';
+    button.title = 'Basculer en mode clair';
+    localStorage.setItem('darkMode', 'enabled');
+  } else {
+    button.textContent = '🌙';
+    button.title = 'Basculer en mode sombre';
+    localStorage.setItem('darkMode', 'disabled');
+  }
+}
+
+// Charger la préférence au démarrage
+document.addEventListener('DOMContentLoaded', () => {
+  const darkMode = localStorage.getItem('darkMode');
+  const button = document.getElementById('darkModeToggle');
+  
+  if (darkMode === 'enabled') {
+    document.body.classList.add('dark-mode');
+    if (button) {
+      button.textContent = '☀️';
+      button.title = 'Basculer en mode clair';
+    }
+  }
+});
+</script>
 </body>
 </html>

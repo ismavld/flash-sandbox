@@ -6,6 +6,77 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Tableau de bord · Flash Sandbox</title>
   <link rel="stylesheet" href="/style.css">
+  <style>/* Container d'autocomplétion */
+.autocomplete-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Liste déroulante */
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  display: none;
+  margin-top: -2px;  /* ← Colle au input */
+}
+
+.autocomplete-list.show {
+  display: block;
+}
+
+/* Items de suggestion */
+.autocomplete-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--bg);
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.selected {
+  background-color: var(--bg);  /* ← Hover clair */
+}
+
+/* Style du username */
+.autocomplete-item .username {
+  font-weight: 600;
+  color: var(--primary);  /* ← Couleur primaire */
+}
+
+/* Style de l'email */
+.autocomplete-item .email {
+  font-size: 0.875rem;
+  color: var(--text-light);  /* ← Gris clair */
+}
+
+/* États de chargement/vide */
+.autocomplete-loading,
+.autocomplete-empty {
+  padding: 12px 16px;
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.875rem;
+}
+
+  </style>
 </head>
 <body>
   <div class="container">
@@ -13,6 +84,9 @@
       <div class="header-content">
         <h1>⚡ Flash Sandbox</h1>
         <div class="user-menu">
+          <button id="darkModeToggle" class="btn-dark-mode" onclick="toggleDarkMode()" title="Basculer en mode sombre">
+        🌙
+          </button>
           <span id="userUsername" class="user-email">@<span id="usernameText"></span></span>
           <button id="logoutBtn" class="btn-logout">Déconnexion</button>
         </div>
@@ -57,19 +131,20 @@
     <div class="modal-content">
       <div class="modal-header">
         <h3>Partager la sandbox</h3>
-        <button class="modal-close" onclick="closeShareModal()">×</button>
       </div>
       <div class="modal-body">
         <p>Entrez le nom d'utilisateur avec qui partager :</p>
         <form id="shareForm">
-          <input 
-            type="text" 
-            id="shareUsername" 
-            placeholder="@username"
-            pattern="[a-zA-Z0-9_-]{3,20}"
-            required
-            autocomplete="off"
-          >
+          <div class="autocomplete-container">
+            <input 
+              type="text" 
+              id="shareUsername" 
+              placeholder="@username"
+              required
+              autocomplete="off"
+            >
+            <div id="autocompleteList" class="autocomplete-list"></div>
+          </div>
           <button type="submit" class="btn-primary">Partager</button>
         </form>
         <div id="shareError" class="error-message" style="display: none;"></div>
@@ -81,5 +156,39 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/supabase-client.js"></script>
   <script src="/dashboard.js"></script>
+  <script>
+// Fonction de toggle du mode sombre
+function toggleDarkMode() {
+  const body = document.body;
+  const button = document.getElementById('darkModeToggle');
+  
+  body.classList.toggle('dark-mode');
+  
+  // Change l'emoji du bouton
+  if (body.classList.contains('dark-mode')) {
+    button.textContent = '☀️';
+    button.title = 'Basculer en mode clair';
+    localStorage.setItem('darkMode', 'enabled');
+  } else {
+    button.textContent = '🌙';
+    button.title = 'Basculer en mode sombre';
+    localStorage.setItem('darkMode', 'disabled');
+  }
+}
+
+// Charger la préférence au démarrage
+document.addEventListener('DOMContentLoaded', () => {
+  const darkMode = localStorage.getItem('darkMode');
+  const button = document.getElementById('darkModeToggle');
+  
+  if (darkMode === 'enabled') {
+    document.body.classList.add('dark-mode');
+    if (button) {
+      button.textContent = '☀️';
+      button.title = 'Basculer en mode clair';
+    }
+  }
+});
+</script>
 </body>
 </html>
